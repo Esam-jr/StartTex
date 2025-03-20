@@ -14,17 +14,19 @@ export class UsersService {
   private initializeSupabase() {
     try {
       const supabaseUrl = this.configService.get("SUPABASE_URL");
-      const supabaseKey = this.configService.get("SUPABASE_KEY");
+      const supabaseKey = this.configService.get("SUPABASE_SERVICE_ROLE_KEY");
 
       if (!supabaseUrl || !supabaseKey) {
         this.logger.error(
-          "Missing Supabase credentials. Please configure SUPABASE_URL and SUPABASE_KEY in your .env file"
+          "Missing Supabase credentials. Please configure SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in your .env file"
         );
         return;
       }
 
       this.supabase = createClient(supabaseUrl, supabaseKey);
-      this.logger.log("Supabase client initialized successfully");
+      this.logger.log(
+        "Supabase client initialized successfully with service role"
+      );
     } catch (error) {
       this.logger.error("Failed to initialize Supabase client:", error);
     }
