@@ -1,0 +1,29 @@
+{
+  "name": "@starttex/auth-lib",
+  "version": "1.0.0",
+  "description": "Shared authentication library for StartTex microservices",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "private": true,
+  "scripts": {
+    "build": "tsc",
+    "test": "jest",
+    "lint": "eslint \"src/**/*.ts\""
+  },
+  "dependencies": {
+    "@nestjs/axios": "^4.0.0",
+    "@nestjs/common": "^10.0.0",
+    "@nestjs/jwt": "^10.1.1",
+    "class-validator": "^0.14.0"
+  },
+  "devDependencies": {
+    "@types/jest": "^29.5.2",
+    "@types/node": "^20.3.1",
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0",
+    "eslint": "^8.42.0",
+    "jest": "^29.5.0",
+    "ts-jest": "^29.1.0",
+    "typescript": "^5.1.3"
+  }
+}
