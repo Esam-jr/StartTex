@@ -5,25 +5,33 @@ import { ConfigService } from "@nestjs/config";
 import { AuthService } from "../auth.service";
 
 @Injectable()
-export class LinkedinStrategy extends PassportStrategy(Strategy, "linkedin") {
+export class LinkedInStrategy extends PassportStrategy(Strategy, "linkedin") {
   constructor(
     configService: ConfigService,
     private authService: AuthService
   ) {
     super({
-      clientID: configService.get("LINKEDIN_CLIENT_ID"),
-      clientSecret: configService.get("LINKEDIN_CLIENT_SECRET"),
-      callbackURL: `${configService.get("OAUTH_CALLBACK_URL")}/linkedin/callback`,
-      scope: ["openid", "profile", "email"],
+      clientID: process.env.LINKEDIN_CLIENT_ID,
+      clientSecret: process.env.LINKEDIN_CLIENT_SECRET,
+      callbackURL: process.env.LINKEDIN_CALLBACK_URL,
+      scope: ["r_emailaddress", "r_liteprofile"],
     });
   }
 
-  async validate(accessToken: string, refreshToken: string, profile: any) {
+  async validate(
+    accessToken: string,
+    refreshToken: string,
+    profile: any
+  ): Promise<any> {
+    const { displayName, photos, emails } = profile;
+    const [firstName, lastName] = displayName.split(" ");
+
     const user = {
-      email: profile.emails[0].value,
-      firstName: profile.name.givenName,
-      lastName: profile.name.familyName,
-      id: profile.id,
+      email: emails[0].value,
+      firstName: firstName || "",
+      lastName: lastName || "",
+      picture: photos[0].value,
+      accessToken,
     };
 
     return this.authService.validateOAuthUser(user, "linkedin");
