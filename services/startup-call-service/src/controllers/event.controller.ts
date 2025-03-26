@@ -11,7 +11,7 @@ interface Event {
 }
 
 export class EventController {
-  async getAllEvents(req: Request, res: Response) {
+  async getAllEvents(req: Request, res: Response): Promise<void> {
     try {
       const { data, error } = await supabase
         .from("events")
@@ -33,7 +33,7 @@ export class EventController {
     }
   }
 
-  async getEventById(req: Request, res: Response) {
+  async getEventById(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params;
       const { data, error } = await supabase
@@ -59,7 +59,7 @@ export class EventController {
     }
   }
 
-  async createEvent(req: Request, res: Response) {
+  async createEvent(req: Request, res: Response): Promise<void> {
     try {
       if (!req.user?.id) {
         throw new AppError("User not authenticated", 401);
@@ -102,7 +102,7 @@ export class EventController {
     }
   }
 
-  async updateEvent(req: Request, res: Response) {
+  async updateEvent(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params;
       const updates: Partial<Event> = req.body;
@@ -136,7 +136,7 @@ export class EventController {
     }
   }
 
-  async deleteEvent(req: Request, res: Response) {
+  async deleteEvent(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params;
       const { error } = await supabase.from("events").delete().eq("id", id);
@@ -148,7 +148,7 @@ export class EventController {
     }
   }
 
-  async getEventsByStartupCall(req: Request, res: Response) {
+  async getEventsByStartupCall(req: Request, res: Response): Promise<void> {
     try {
       const { callId } = req.params;
       const { data, error } = await supabase

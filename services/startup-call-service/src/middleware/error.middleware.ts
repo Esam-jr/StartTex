@@ -1,9 +1,9 @@
-import { Request, Response, NextFunction } from 'express';
+import { Request, Response, NextFunction } from "express";
 
 export class AppError extends Error {
   constructor(public message: string, public statusCode: number) {
     super(message);
-    this.name = 'AppError';
+    this.name = "AppError";
   }
 }
 
@@ -12,18 +12,16 @@ export const errorHandler = (
   req: Request,
   res: Response,
   next: NextFunction
-) => {
+): void => {
   if (err instanceof AppError) {
-    return res.status(err.statusCode).json({
-      status: 'error',
+    res.status(err.statusCode).json({
       message: err.message,
     });
+    return;
   }
 
-  console.error('Unhandled error:', err);
-
-  return res.status(500).json({
-    status: 'error',
-    message: 'Internal server error',
+  console.error("Error:", err);
+  res.status(500).json({
+    message: "Internal server error",
   });
-}; 
+};
