@@ -9,7 +9,7 @@ export const supabase = createClient(
 // Database connection check
 export const checkDatabaseConnection = async () => {
   try {
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from("startup_calls")
       .select("count")
       .limit(1);

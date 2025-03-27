@@ -11,25 +11,31 @@ interface Event {
 }
 
 export class EventController {
-  async getAllEvents(req: Request, res: Response): Promise<void> {
+  async getAllEvents(_req: Request, res: Response): Promise<void> {
     try {
       const { data, error } = await supabase
         .from("events")
         .select(
           `
           *,
-          startup_calls (
-            title,
-            description
+          startup_call:related_call_id (
+            id,
+            title
           )
-        `
+          `
         )
-        .order("date", { ascending: true });
+        .order("date", { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        throw new AppError("Failed to fetch events", 500);
+      }
+
       res.json(data);
     } catch (error) {
-      throw new AppError("Failed to fetch events", 500);
+      if (error instanceof AppError) {
+        throw error;
+      }
+      throw new AppError("Internal server error", 500);
     }
   }
 

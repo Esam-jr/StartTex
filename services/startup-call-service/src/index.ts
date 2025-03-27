@@ -2,9 +2,10 @@ import "dotenv/config";
 import express from "express";
 import cors from "cors";
 import { errorHandler } from "./middleware/error.middleware";
-import { authenticateUser } from "./middleware/auth.middleware";
-import startupCallRoutes from "./routes/startup-call.routes";
-import eventRoutes from "./routes/event.routes";
+import { requireAuth } from "./middleware/auth.middleware";
+import startupCallRoutes from "./routes/startupCallRoutes";
+import { EventRoutes } from "./routes/event.routes";
+import { EventController } from "./controllers/event.controller";
 import { checkDatabaseConnection } from "./config/database";
 import swaggerUi from "swagger-ui-express";
 import { swaggerSpec } from "./config/swagger";
@@ -19,25 +20,27 @@ app.use(express.json());
 // Swagger UI
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
-// Routes
-app.use("/api/startup-calls", authenticateUser, startupCallRoutes);
-app.use("/api/events", authenticateUser, eventRoutes);
+// Initialize controllers
+const eventController = new EventController();
+
+// Initialize routes
+const eventRoutes = new EventRoutes(eventController);
+eventRoutes.setupRoutes(app);
+
+// Apply routes with authentication
+app.use("/api/startup-calls", requireAuth, startupCallRoutes);
 
 // Error handling
 app.use(errorHandler);
 
-// Start server
 const startServer = async () => {
   try {
-    // Check database connection first
+    // Check database connection
     await checkDatabaseConnection();
-
-    // Start the server
+    
     app.listen(port, () => {
-      console.log(`🚀 Startup Call Service running on port ${port}`);
-      console.log(
-        `📝 API Documentation available at http://localhost:${port}/api-docs`
-      );
+      console.log(`Server is running on port ${port}`);
+      console.log(`API Documentation available at http://localhost:${port}/api-docs`);
     });
   } catch (error) {
     console.error("Failed to start server:", error);
