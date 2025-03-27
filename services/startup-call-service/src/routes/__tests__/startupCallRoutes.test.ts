@@ -33,12 +33,24 @@ describe("Startup Call Routes", () => {
   describe("GET /api/startup-calls", () => {
     it("should return all startup calls", async () => {
       const mockCalls = [
-        { id: 1, title: "Test Call 1" },
-        { id: 2, title: "Test Call 2" },
+        {
+          id: "1",
+          title: "Test Call 1",
+          description: "Test Description 1",
+          date: "2024-03-20T10:00:00Z",
+          status: "scheduled",
+        },
+        {
+          id: "2",
+          title: "Test Call 2",
+          description: "Test Description 2",
+          date: "2024-03-21T11:00:00Z",
+          status: "completed",
+        },
       ];
 
       mockController.getAllStartupCalls.mockImplementation(
-        async (req: Request, res: Response) => {
+        async (_req: Request, res: Response) => {
           res.json(mockCalls);
         }
       );
@@ -52,10 +64,16 @@ describe("Startup Call Routes", () => {
 
   describe("GET /api/startup-calls/:id", () => {
     it("should return a specific startup call", async () => {
-      const mockCall = { id: 1, title: "Test Call" };
+      const mockCall = {
+        id: "1",
+        title: "Test Call",
+        description: "Test Description",
+        date: "2024-03-20T10:00:00Z",
+        status: "scheduled",
+      };
 
       mockController.getStartupCallById.mockImplementation(
-        async (req: Request, res: Response) => {
+        async (_req: Request, res: Response) => {
           res.json(mockCall);
         }
       );
@@ -68,7 +86,7 @@ describe("Startup Call Routes", () => {
 
     it("should return 404 for non-existent call", async () => {
       mockController.getStartupCallById.mockImplementation(
-        async (req: Request, res: Response) => {
+        async (_req: Request, res: Response) => {
           res.status(404).json({ message: "Startup call not found" });
         }
       );
@@ -82,11 +100,23 @@ describe("Startup Call Routes", () => {
 
   describe("POST /api/startup-calls", () => {
     it("should create a new startup call", async () => {
-      const newCall = { title: "New Call", description: "Test Description" };
+      const newCall = {
+        title: "New Call",
+        description: "New Description",
+        date: "2024-03-20T10:00:00Z",
+        status: "scheduled",
+      };
+
+      const createdCall = {
+        id: "1",
+        ...newCall,
+        createdAt: "2024-03-19T12:00:00Z",
+        updatedAt: "2024-03-19T12:00:00Z",
+      };
 
       mockController.createStartupCall.mockImplementation(
-        async (req: Request, res: Response) => {
-          res.status(201).json({ id: 1, ...newCall });
+        async (_req: Request, res: Response) => {
+          res.status(201).json(createdCall);
         }
       );
 
@@ -95,12 +125,12 @@ describe("Startup Call Routes", () => {
         .send(newCall);
 
       expect(response.status).toBe(201);
-      expect(response.body).toEqual({ id: 1, ...newCall });
+      expect(response.body).toEqual(createdCall);
     });
 
     it("should return 400 for invalid input", async () => {
       mockController.createStartupCall.mockImplementation(
-        async (req: Request, res: Response) => {
+        async (_req: Request, res: Response) => {
           res.status(400).json({ message: "Invalid input" });
         }
       );
@@ -114,25 +144,36 @@ describe("Startup Call Routes", () => {
 
   describe("PUT /api/startup-calls/:id", () => {
     it("should update an existing startup call", async () => {
-      const updates = { title: "Updated Call" };
+      const updateData = {
+        title: "Updated Call",
+        description: "Updated Description",
+      };
+
+      const updatedCall = {
+        id: "1",
+        ...updateData,
+        date: "2024-03-20T10:00:00Z",
+        status: "scheduled",
+        updatedAt: "2024-03-19T12:00:00Z",
+      };
 
       mockController.updateStartupCall.mockImplementation(
-        async (req: Request, res: Response) => {
-          res.json({ id: 1, ...updates });
+        async (_req: Request, res: Response) => {
+          res.json(updatedCall);
         }
       );
 
       const response = await request(app)
         .put("/api/startup-calls/1")
-        .send(updates);
+        .send(updateData);
 
       expect(response.status).toBe(200);
-      expect(response.body).toEqual({ id: 1, ...updates });
+      expect(response.body).toEqual(updatedCall);
     });
 
     it("should return 404 for non-existent call", async () => {
       mockController.updateStartupCall.mockImplementation(
-        async (req: Request, res: Response) => {
+        async (_req: Request, res: Response) => {
           res.status(404).json({ message: "Startup call not found" });
         }
       );
@@ -149,7 +190,7 @@ describe("Startup Call Routes", () => {
   describe("DELETE /api/startup-calls/:id", () => {
     it("should delete an existing startup call", async () => {
       mockController.deleteStartupCall.mockImplementation(
-        async (req: Request, res: Response) => {
+        async (_req: Request, res: Response) => {
           res.status(204).send();
         }
       );
@@ -161,7 +202,7 @@ describe("Startup Call Routes", () => {
 
     it("should return 404 for non-existent call", async () => {
       mockController.deleteStartupCall.mockImplementation(
-        async (req: Request, res: Response) => {
+        async (_req: Request, res: Response) => {
           res.status(404).json({ message: "Startup call not found" });
         }
       );

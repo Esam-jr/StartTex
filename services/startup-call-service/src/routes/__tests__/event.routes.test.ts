@@ -48,7 +48,7 @@ describe("Event Routes", () => {
       ];
 
       mockController.getAllEvents.mockImplementation(
-        async (req: Request, res: Response) => {
+        async (_req: Request, res: Response) => {
           res.json(mockEvents);
         }
       );
@@ -71,7 +71,7 @@ describe("Event Routes", () => {
       };
 
       mockController.getEventById.mockImplementation(
-        async (req: Request, res: Response) => {
+        async (_req: Request, res: Response) => {
           res.json(mockEvent);
         }
       );
@@ -84,7 +84,7 @@ describe("Event Routes", () => {
 
     it("should return 404 for non-existent event", async () => {
       mockController.getEventById.mockImplementation(
-        async (req: Request, res: Response) => {
+        async (_req: Request, res: Response) => {
           res.status(404).json({ message: "Event not found" });
         }
       );
@@ -109,7 +109,7 @@ describe("Event Routes", () => {
       ];
 
       mockController.getEventsByStartupCall.mockImplementation(
-        async (req: Request, res: Response) => {
+        async (_req: Request, res: Response) => {
           res.json(mockEvents);
         }
       );
@@ -138,7 +138,7 @@ describe("Event Routes", () => {
       };
 
       mockController.createEvent.mockImplementation(
-        async (req: Request, res: Response) => {
+        async (_req: Request, res: Response) => {
           res.status(201).json(createdEvent);
         }
       );
@@ -154,7 +154,7 @@ describe("Event Routes", () => {
 
     it("should return 403 for non-admin users", async () => {
       mockController.createEvent.mockImplementation(
-        async (req: Request, res: Response) => {
+        async (_req: Request, res: Response) => {
           res
             .status(403)
             .json({ message: "Forbidden - Admin access required" });
@@ -193,7 +193,7 @@ describe("Event Routes", () => {
       };
 
       mockController.updateEvent.mockImplementation(
-        async (req: Request, res: Response) => {
+        async (_req: Request, res: Response) => {
           res.json(updatedEvent);
         }
       );
@@ -209,7 +209,7 @@ describe("Event Routes", () => {
 
     it("should return 404 for non-existent event", async () => {
       mockController.updateEvent.mockImplementation(
-        async (req: Request, res: Response) => {
+        async (_req: Request, res: Response) => {
           res.status(404).json({ message: "Event not found" });
         }
       );
@@ -227,7 +227,7 @@ describe("Event Routes", () => {
   describe("DELETE /api/events/:id", () => {
     it("should delete an existing event (Admin only)", async () => {
       mockController.deleteEvent.mockImplementation(
-        async (req: Request, res: Response) => {
+        async (_req: Request, res: Response) => {
           res.status(204).send();
         }
       );
@@ -241,7 +241,7 @@ describe("Event Routes", () => {
 
     it("should return 404 for non-existent event", async () => {
       mockController.deleteEvent.mockImplementation(
-        async (req: Request, res: Response) => {
+        async (_req: Request, res: Response) => {
           res.status(404).json({ message: "Event not found" });
         }
       );

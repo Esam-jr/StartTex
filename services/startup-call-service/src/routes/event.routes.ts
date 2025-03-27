@@ -1,5 +1,5 @@
 import express from "express";
-import { body } from "express-validator";
+const { check } = require("express-validator");
 import { EventController } from "../controllers/event.controller";
 import { validateRequest } from "../middleware/validate.middleware";
 import { requireAdmin } from "../middleware/auth.middleware";
@@ -12,10 +12,10 @@ export class EventRoutes {
 
     // Validation middleware
     const createValidation = [
-      body("title").notEmpty().withMessage("Title is required"),
-      body("description").notEmpty().withMessage("Description is required"),
-      body("date").isISO8601().withMessage("Invalid date format"),
-      body("related_call_id")
+      check("title").notEmpty().withMessage("Title is required"),
+      check("description").notEmpty().withMessage("Description is required"),
+      check("date").isISO8601().withMessage("Invalid date format"),
+      check("related_call_id")
         .optional()
         .isString()
         .withMessage("Invalid call ID"),
@@ -23,13 +23,13 @@ export class EventRoutes {
     ];
 
     const updateValidation = [
-      body("title").optional().notEmpty().withMessage("Title cannot be empty"),
-      body("description")
+      check("title").optional().notEmpty().withMessage("Title cannot be empty"),
+      check("description")
         .optional()
         .notEmpty()
         .withMessage("Description cannot be empty"),
-      body("date").optional().isISO8601().withMessage("Invalid date format"),
-      body("related_call_id")
+      check("date").optional().isISO8601().withMessage("Invalid date format"),
+      check("related_call_id")
         .optional()
         .isString()
         .withMessage("Invalid call ID"),
