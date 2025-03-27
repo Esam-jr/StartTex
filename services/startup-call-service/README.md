@@ -1,152 +1,108 @@
-Startup Call Management Service
-===============================
+# Startup Call Management Service
 
+A microservice for managing startup calls and related events in the Startup Management System.
 
-Overview
---------
+## Features
 
-The **Startup Call Management Service** is responsible for handling all activities related to the announcement, promotion, and management of startup calls. A "Startup Call" refers to an official invitation for entrepreneurs to submit their startup ideas, typically within a specific time window, accompanied by guidelines, categories, and associated events.
+- Create and manage startup calls
+- Schedule and manage events
+- Role-based access control (Admin/User)
+- Input validation
+- Error handling
+- API documentation with Swagger
 
-This microservice enables administrators to create and manage startup calls, set deadlines, publish relevant events, and promote the calls via social media integrations. Additionally, it exposes APIs that allow other services (such as the Idea Submission Service) and clients to retrieve active calls and event calendars.
+## Project Structure
 
-It plays a foundational role in ensuring that the startup ecosystem remains dynamic, organized, and accessible to potential applicants and stakeholders.
+```
+src/
+├── __tests__/           # Test files
+│   └── routes/         # Route tests
+├── config/             # Configuration files
+├── controllers/        # Route controllers
+├── middleware/         # Custom middleware
+├── routes/            # API routes
+├── services/          # Business logic
+├── types/             # TypeScript types
+└── index.ts           # Application entry point
+```
 
+## Prerequisites
 
-Core Responsibilities
----------------------
+- Node.js (v14 or higher)
+- PostgreSQL
+- Supabase account
 
-1.  **Startup Call Creation & Management**
+## Installation
 
-    -   Administrators can define new startup calls, including title, description, categories, submission guidelines, deadlines, and promotional materials.
-    -   Capability to update, delete, or archive old startup calls.
-2.  **Promotion Tools**
+1. Clone the repository
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+3. Copy environment file:
+   ```bash
+   cp .env.example .env
+   ```
+4. Update environment variables in `.env`
 
-    -   Generate sharable promotional links or materials for distribution across social media platforms, newsletters, and websites.
-    -   Future extension: Integration with third-party APIs (e.g., Twitter, LinkedIn) to automate promotion.
-3.  **Events Calendar Management**
+## Development
 
-    -   Maintain a calendar of key dates and deadlines tied to startup calls, such as submission open dates, evaluation phases, and result announcements.
-    -   Public API for clients and applicants to view upcoming events.
-4.  **Public API for Calls & Events**
+1. Start development server:
 
-    -   Provides endpoints for users and other services to query active startup calls, guidelines, and upcoming events.
+   ```bash
+   npm run dev
+   ```
 
+2. Run tests:
 
-Data Models
------------
+   ```bash
+   npm test
+   ```
 
-### Startup Call Model
+3. Build for production:
+   ```bash
+   npm run build
+   ```
 
-| Field | Description |
-| --- | --- |
-| **id** | Unique identifier |
-| **title** | Title of the startup call |
-| **description** | Detailed description and objectives |
-| **categories** | Array of categories (e.g., Fintech, HealthTech) |
-| **submissionWindow** | Start and end dates for accepting ideas |
-| **eligibility** | Criteria determining who can apply (e.g., region, stage, industry) |
-| **reward** | Information on prizes, funding, or other incentives |
-| **tags** | Keywords for better search and categorization |
-| **maxSubmissions** | Maximum number of submissions allowed per applicant |
-| **reviewPanel** | IDs or names of judges/mentors involved in evaluating submissions |
-| **guidelinesLink** | URL to guidelines and templates |
-| **promotionalMedia** | Media links or banners for promotional use |
-| **status** | Current state (Draft, Active, Closed, Archived) |
-| **createdBy** | Admin user ID who created the call |
-| **createdAt** | Timestamp of creation |
+## API Documentation
 
+The API documentation is available at `/api-docs` when running the server.
 
+### Endpoints
 
-### Event Model
+#### Startup Calls
 
-| Field | Description |
-| --- | --- |
-| id | Unique identifier |
-| title | Event title |
-| description | Event details |
-| date | Scheduled date |
-| relatedCallId | Startup call associated with the event (nullable) |
-| createdAt | Timestamp |
+- `GET /api/startup-calls` - Get all startup calls
+- `GET /api/startup-calls/:id` - Get a specific startup call
+- `POST /api/startup-calls` - Create a new startup call (Admin only)
+- `PUT /api/startup-calls/:id` - Update a startup call (Admin only)
+- `DELETE /api/startup-calls/:id` - Delete a startup call (Admin only)
 
+#### Events
 
-API Endpoints
--------------
+- `GET /api/events` - Get all events
+- `GET /api/events/:id` - Get a specific event
+- `GET /api/events/startup-call/:callId` - Get events for a startup call
+- `POST /api/events` - Create a new event (Admin only)
+- `PUT /api/events/:id` - Update an event (Admin only)
+- `DELETE /api/events/:id` - Delete an event (Admin only)
 
-### Startup Calls
+## Testing
 
-| Method | Endpoint | Description | Auth Role |
-| --- | --- | --- | --- |
-| POST | /calls | Create a new startup call | Admin |
-| GET | /calls | Retrieve all active startup calls | Public |
-| GET | /calls/{id} | Retrieve details of a specific startup call | Public |
-| PUT | /calls/{id} | Update an existing startup call | Admin |
-| DELETE | /calls/{id} | Delete/archive a startup call | Admin |
+The project uses Jest for testing. Run tests with:
 
+```bash
+npm test
+```
 
-### Events Calendar
+## Contributing
 
-| Method | Endpoint | Description | Auth Role |
-| --- | --- | --- | --- |
-| POST | /events | Create a new event | Admin |
-| GET | /events | Retrieve all events | Public |
-| GET | /events/{id} | Retrieve details of a specific event | Public |
-| PUT | /events/{id} | Update event details | Admin |
-| DELETE | /events/{id} | Delete an event | Admin |
+1. Fork the repository
+2. Create a feature branch
+3. Commit your changes
+4. Push to the branch
+5. Create a Pull Request
 
+## License
 
-Dependencies
-------------
-
--   **Authentication & User Management Service**
-    -   JWT token validation for all secured endpoints.
-    -   Role verification to ensure only Admins can create or manage startup calls/events.
-
-
-Database
---------
-
-A dedicated PostgreSQL database for this service, containing:
-
--   `StartupCalls` table
--   `Events` table
-
-Each table includes standard fields such as IDs, timestamps, and foreign keys where necessary.
-
-
-Interactions with Other Services
---------------------------------
-
-1.  **Idea Submission Service**
-
-    -   Reads active startup calls to allow entrepreneurs to submit ideas under specific calls.
-2.  **Notification Service (Optional)**
-
-    -   Sends notifications to users about new startup calls or upcoming events.
-3.  **Reporting & Analytics Service**
-
-    -   Pulls data on startup calls, submission windows, and event engagement to generate performance reports.
-
-
-Security & Access Control
--------------------------
-
--   All public endpoints (GET /calls, GET /events) are accessible without authentication.
--   Management endpoints (POST, PUT, DELETE) require a valid JWT token and the Admin role.
--   OAuth 2.0-based authentication is handled by the Auth Service, this service only verifies tokens and user roles.
-
-
-Future Enhancements
--------------------
-
--   **Third-Party API Integrations:**
-    -   Direct social media API integration for automatic promotional postings.
--   **Call Templates:**
-    -   Allow predefined templates for frequently repeated startup calls.
--   **Advanced Event Notifications:**
-    -   Schedule automatic reminders for key event dates via Notification Service.
-
-
-Summary
--------
-
-The **Startup Call Management Service** is a vital backbone of the Startup Management System, ensuring structured, well-promoted, and well-managed startup call campaigns. By cleanly separating the creation, management, and promotion of calls and related events, it simplifies the process for both administrators and applicants, while also integrating seamlessly with other system modules.
+This project is licensed under the MIT License - see the LICENSE file for details.

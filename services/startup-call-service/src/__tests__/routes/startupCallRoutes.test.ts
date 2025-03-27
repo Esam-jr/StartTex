@@ -1,30 +1,89 @@
 import request from "supertest";
 import express from "express";
-import { StartupCallController } from "../../controllers/startupCallController";
-import { StartupCallRoutes } from "../startupCall.routes";
-import { Request, Response } from "express";
+import startupCallRoutes from "../../routes/startupCallRoutes";
 
 // Mock the controller
-jest.mock("../../controllers/startupCallController");
+jest.mock("../../controllers/startupCallController", () => {
+  return {
+    StartupCallController: jest.fn().mockImplementation(() => ({
+      getAllStartupCalls: jest.fn().mockImplementation((_req, res) => {
+        const mockCalls = [
+          {
+            id: "1",
+            title: "Test Call 1",
+            description: "Test Description 1",
+            date: "2024-03-20T10:00:00Z",
+            status: "scheduled",
+          },
+          {
+            id: "2",
+            title: "Test Call 2",
+            description: "Test Description 2",
+            date: "2024-03-21T11:00:00Z",
+            status: "completed",
+          },
+        ];
+        res.json(mockCalls);
+      }),
+      getStartupCallById: jest.fn().mockImplementation((req, res) => {
+        if (req.params.id === "999") {
+          res.status(404).json({ message: "Startup call not found" });
+        } else {
+          const mockCall = {
+            id: req.params.id,
+            title: "Test Call",
+            description: "Test Description",
+            date: "2024-03-20T10:00:00Z",
+            status: "scheduled",
+          };
+          res.json(mockCall);
+        }
+      }),
+      createStartupCall: jest.fn().mockImplementation((req, res) => {
+        if (!req.body.startupId || !req.body.callDate) {
+          res.status(400).json({ message: "Invalid input" });
+        } else {
+          const newCall = {
+            id: "1",
+            ...req.body,
+            createdAt: "2024-03-19T12:00:00Z",
+            updatedAt: "2024-03-19T12:00:00Z",
+          };
+          res.status(201).json(newCall);
+        }
+      }),
+      updateStartupCall: jest.fn().mockImplementation((req, res) => {
+        if (req.params.id === "999") {
+          res.status(404).json({ message: "Startup call not found" });
+        } else {
+          const updatedCall = {
+            id: req.params.id,
+            ...req.body,
+            date: "2024-03-20T10:00:00Z",
+            status: "scheduled",
+            updatedAt: "2024-03-19T12:00:00Z",
+          };
+          res.json(updatedCall);
+        }
+      }),
+      deleteStartupCall: jest.fn().mockImplementation((req, res) => {
+        if (req.params.id === "999") {
+          res.status(404).json({ message: "Startup call not found" });
+        } else {
+          res.status(204).send();
+        }
+      }),
+    })),
+  };
+});
 
 describe("Startup Call Routes", () => {
   let app: express.Application;
-  let mockController: jest.Mocked<StartupCallController>;
 
   beforeEach(() => {
     app = express();
     app.use(express.json());
-
-    mockController = {
-      getAllStartupCalls: jest.fn(),
-      getStartupCallById: jest.fn(),
-      createStartupCall: jest.fn(),
-      updateStartupCall: jest.fn(),
-      deleteStartupCall: jest.fn(),
-    } as unknown as jest.Mocked<StartupCallController>;
-
-    const routes = new StartupCallRoutes(mockController);
-    routes.setupRoutes(app);
+    app.use("/api/startup-calls", startupCallRoutes);
 
     // Reset all mocks
     jest.clearAllMocks();
@@ -49,12 +108,6 @@ describe("Startup Call Routes", () => {
         },
       ];
 
-      mockController.getAllStartupCalls.mockImplementation(
-        async (_req: Request, res: Response) => {
-          res.json(mockCalls);
-        }
-      );
-
       const response = await request(app).get("/api/startup-calls");
 
       expect(response.status).toBe(200);
@@ -72,12 +125,6 @@ describe("Startup Call Routes", () => {
         status: "scheduled",
       };
 
-      mockController.getStartupCallById.mockImplementation(
-        async (_req: Request, res: Response) => {
-          res.json(mockCall);
-        }
-      );
-
       const response = await request(app).get("/api/startup-calls/1");
 
       expect(response.status).toBe(200);
@@ -85,12 +132,6 @@ describe("Startup Call Routes", () => {
     });
 
     it("should return 404 for non-existent call", async () => {
-      mockController.getStartupCallById.mockImplementation(
-        async (_req: Request, res: Response) => {
-          res.status(404).json({ message: "Startup call not found" });
-        }
-      );
-
       const response = await request(app).get("/api/startup-calls/999");
 
       expect(response.status).toBe(404);
@@ -101,9 +142,9 @@ describe("Startup Call Routes", () => {
   describe("POST /api/startup-calls", () => {
     it("should create a new startup call", async () => {
       const newCall = {
-        title: "New Call",
-        description: "New Description",
-        date: "2024-03-20T10:00:00Z",
+        startupId: "1",
+        callDate: "2024-03-20T10:00:00Z",
+        notes: "Test notes",
         status: "scheduled",
       };
 
@@ -114,12 +155,6 @@ describe("Startup Call Routes", () => {
         updatedAt: "2024-03-19T12:00:00Z",
       };
 
-      mockController.createStartupCall.mockImplementation(
-        async (_req: Request, res: Response) => {
-          res.status(201).json(createdCall);
-        }
-      );
-
       const response = await request(app)
         .post("/api/startup-calls")
         .send(newCall);
@@ -129,16 +164,28 @@ describe("Startup Call Routes", () => {
     });
 
     it("should return 400 for invalid input", async () => {
-      mockController.createStartupCall.mockImplementation(
-        async (_req: Request, res: Response) => {
-          res.status(400).json({ message: "Invalid input" });
-        }
-      );
-
       const response = await request(app).post("/api/startup-calls").send({});
 
       expect(response.status).toBe(400);
-      expect(response.body).toEqual({ message: "Invalid input" });
+      expect(response.body).toEqual({
+        errors: [
+          {
+            location: "body",
+            msg: "Startup ID is required",
+            param: "startupId",
+          },
+          {
+            location: "body",
+            msg: "Valid call date is required",
+            param: "callDate",
+          },
+          {
+            location: "body",
+            msg: "Invalid status",
+            param: "status",
+          },
+        ],
+      });
     });
   });
 
@@ -157,12 +204,6 @@ describe("Startup Call Routes", () => {
         updatedAt: "2024-03-19T12:00:00Z",
       };
 
-      mockController.updateStartupCall.mockImplementation(
-        async (_req: Request, res: Response) => {
-          res.json(updatedCall);
-        }
-      );
-
       const response = await request(app)
         .put("/api/startup-calls/1")
         .send(updateData);
@@ -172,12 +213,6 @@ describe("Startup Call Routes", () => {
     });
 
     it("should return 404 for non-existent call", async () => {
-      mockController.updateStartupCall.mockImplementation(
-        async (_req: Request, res: Response) => {
-          res.status(404).json({ message: "Startup call not found" });
-        }
-      );
-
       const response = await request(app)
         .put("/api/startup-calls/999")
         .send({ title: "Updated Call" });
@@ -189,24 +224,12 @@ describe("Startup Call Routes", () => {
 
   describe("DELETE /api/startup-calls/:id", () => {
     it("should delete an existing startup call", async () => {
-      mockController.deleteStartupCall.mockImplementation(
-        async (_req: Request, res: Response) => {
-          res.status(204).send();
-        }
-      );
-
       const response = await request(app).delete("/api/startup-calls/1");
 
       expect(response.status).toBe(204);
     });
 
     it("should return 404 for non-existent call", async () => {
-      mockController.deleteStartupCall.mockImplementation(
-        async (_req: Request, res: Response) => {
-          res.status(404).json({ message: "Startup call not found" });
-        }
-      );
-
       const response = await request(app).delete("/api/startup-calls/999");
 
       expect(response.status).toBe(404);

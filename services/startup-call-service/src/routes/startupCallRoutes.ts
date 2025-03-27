@@ -1,6 +1,6 @@
 import express from "express";
-import { body } from "express-validator";
-import { validateRequest } from "../middleware/validateRequest";
+const { check } = require("express-validator");
+import { validateRequest } from "../middleware/validate.middleware";
 import { StartupCallController } from "../controllers/startupCallController";
 
 const router = express.Router();
@@ -86,10 +86,10 @@ router.get("/:id", controller.getStartupCallById);
 router.post(
   "/",
   [
-    body("startupId").notEmpty().withMessage("Startup ID is required"),
-    body("callDate").isISO8601().withMessage("Valid call date is required"),
-    body("notes").optional().isString(),
-    body("status")
+    check("startupId").notEmpty().withMessage("Startup ID is required"),
+    check("callDate").isISO8601().withMessage("Valid call date is required"),
+    check("notes").optional().isString(),
+    check("status")
       .isIn(["scheduled", "completed", "cancelled"])
       .withMessage("Invalid status"),
   ],
@@ -135,16 +135,16 @@ router.post(
 router.put(
   "/:id",
   [
-    body("startupId")
+    check("startupId")
       .optional()
       .notEmpty()
       .withMessage("Startup ID is required"),
-    body("callDate")
+    check("callDate")
       .optional()
       .isISO8601()
       .withMessage("Valid call date is required"),
-    body("notes").optional().isString(),
-    body("status")
+    check("notes").optional().isString(),
+    check("status")
       .optional()
       .isIn(["scheduled", "completed", "cancelled"])
       .withMessage("Invalid status"),

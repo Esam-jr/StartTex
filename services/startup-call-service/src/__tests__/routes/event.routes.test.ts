@@ -1,7 +1,7 @@
 import request from "supertest";
 import express from "express";
 import { EventController } from "../../controllers/event.controller";
-import { EventRoutes } from "../event.routes";
+import { EventRoutes } from "../../routes/event.routes";
 import { Request, Response } from "express";
 
 describe("Event Routes", () => {
