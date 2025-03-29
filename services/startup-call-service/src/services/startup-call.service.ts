@@ -1,5 +1,5 @@
-import { supabase } from '../index';
-import { AppError } from '../middleware/error.middleware';
+import { supabase } from "../config/database";
+import { AppError } from "../middleware/error.middleware";
 
 export interface StartupCall {
   id: string;
@@ -15,13 +15,23 @@ export interface StartupCall {
 
 export class StartupCallService {
   async getAllStartupCalls(): Promise<StartupCall[]> {
-    const { data, error } = await supabase
-      .from('startup_calls')
-      .select('*')
-      .order('created_at', { ascending: false });
+    try {
+      const { data, error } = await supabase
+        .from('startup_calls')
+        .select('*')
+        .order('created_at', { ascending: false });
 
-    if (error) throw new AppError('Failed to fetch startup calls', 500);
-    return data;
+      if (error) {
+        throw new AppError('Failed to fetch startup calls', 500);
+      }
+
+      return data;
+    } catch (error) {
+      if (error instanceof AppError) {
+        throw error;
+      }
+      throw new AppError('Internal server error', 500);
+    }
   }
 
   async getStartupCallById(id: string): Promise<StartupCall> {
