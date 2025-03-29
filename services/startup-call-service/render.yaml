@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: starttex-startup-call-service
+    env: node
+    buildCommand: npm ci && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3002
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_KEY
+        sync: false
+      - key: AUTH_SERVICE_URL
+        sync: false 
