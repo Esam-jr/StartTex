@@ -6,11 +6,17 @@ import { AppModule } from "./app.module";
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
+  // Update CORS configuration to work with Render
   app.enableCors({
-    origin: "http://localhost:3000/api",
+    origin: [
+      "http://localhost:3000",
+      "https://starttex.onrender.com",
+      "https://starttex.onrender.com/api",
+    ],
     methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
     credentials: true,
   });
+
   // Enable validation pipes
   app.useGlobalPipes(new ValidationPipe());
 
@@ -35,6 +41,9 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup("api", app, document);
 
-  await app.listen(3000);
+  // Use PORT from environment variable or default to 3000
+  const port = process.env.PORT || 3000;
+  await app.listen(port);
+  console.log(`Application is running on: ${await app.getUrl()}`);
 }
 bootstrap();
