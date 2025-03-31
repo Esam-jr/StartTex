@@ -7,14 +7,14 @@ import { AuthService } from "../auth.service";
 @Injectable()
 export class LinkedInStrategy extends PassportStrategy(Strategy, "linkedin") {
   constructor(
-    configService: ConfigService,
+    private configService: ConfigService,
     private authService: AuthService
   ) {
     super({
-      clientID: process.env.LINKEDIN_CLIENT_ID,
-      clientSecret: process.env.LINKEDIN_CLIENT_SECRET,
-      callbackURL: process.env.LINKEDIN_CALLBACK_URL,
-      scope: ["r_emailaddress", "r_liteprofile"],
+      clientID: configService.get<string>("LINKEDIN_CLIENT_ID"),
+      clientSecret: configService.get<string>("LINKEDIN_CLIENT_SECRET"),
+      callbackURL: configService.get<string>("LINKEDIN_CALLBACK_URL"),
+      scope: ["r_liteprofile", "r_emailaddress", "w_member_social"],
     });
   }
 
