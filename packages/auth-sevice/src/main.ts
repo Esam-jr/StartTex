@@ -2,6 +2,7 @@ import { NestFactory } from "@nestjs/core";
 import { ValidationPipe } from "@nestjs/common";
 import { SwaggerModule, DocumentBuilder } from "@nestjs/swagger";
 import { AppModule } from "./app.module";
+import * as session from "express-session";
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -16,6 +17,20 @@ async function bootstrap() {
     methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
     credentials: true,
   });
+
+  // Add session middleware
+  app.use(
+    session({
+      secret: process.env.SESSION_SECRET || "your-secret-key",
+      resave: false,
+      saveUninitialized: false,
+      cookie: {
+        secure: process.env.NODE_ENV === "production",
+        maxAge: 24 * 60 * 60 * 1000, // 24 hours
+      },
+      name: "starttex.sid",
+    })
+  );
 
   // Enable validation pipes
   app.useGlobalPipes(new ValidationPipe());
