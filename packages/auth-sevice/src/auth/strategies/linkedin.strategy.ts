@@ -12,7 +12,7 @@ export class LinkedInStrategy extends PassportStrategy(Strategy, "linkedin") {
     private configService: ConfigService,
     private authService: AuthService
   ) {
-    super({
+    const config = {
       issuer: "https://www.linkedin.com",
       authorizationURL: "https://www.linkedin.com/oauth/v2/authorization",
       tokenURL: "https://www.linkedin.com/oauth/v2/accessToken",
@@ -20,17 +20,18 @@ export class LinkedInStrategy extends PassportStrategy(Strategy, "linkedin") {
       clientID: configService.get<string>("LINKEDIN_CLIENT_ID"),
       clientSecret: configService.get<string>("LINKEDIN_CLIENT_SECRET"),
       callbackURL: configService.get<string>("LINKEDIN_CALLBACK_URL"),
-      scope: "openid profile email",
+      scope: ["openid", "profile", "email"],
       passReqToCallback: true,
       state: true,
-      pkce: true,
-      response_type: "code",
+      pkce: false, // Disabled to avoid conflicts with client_secret
       token_endpoint_auth_method: "client_secret_post",
       authorizationParams: {
         response_type: "code",
         prompt: "consent",
       },
-    });
+    };
+    super(config);
+    this.logger.debug("LinkedIn Strategy Configuration:", config); // Log the config
   }
 
   async validate(
@@ -41,7 +42,8 @@ export class LinkedInStrategy extends PassportStrategy(Strategy, "linkedin") {
     accessToken: string
   ): Promise<any> {
     try {
-      this.logger.debug("LinkedIn OIDC profile received:", profile);
+      this.logger.debug("Access Token Received:", accessToken); // Log the token
+      this.logger.debug("LinkedIn OIDC Profile Received:", profile); // Log the profile
 
       const user = {
         id: sub,
@@ -52,7 +54,7 @@ export class LinkedInStrategy extends PassportStrategy(Strategy, "linkedin") {
         accessToken,
       };
 
-      this.logger.debug("Processed user data:", user);
+      this.logger.debug("Processed User Data:", user); // Log the processed user
 
       if (!user.email) {
         this.logger.error("No email found in LinkedIn profile");
