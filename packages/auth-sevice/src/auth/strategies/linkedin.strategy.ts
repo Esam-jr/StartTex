@@ -23,6 +23,13 @@ export class LinkedInStrategy extends PassportStrategy(Strategy, "linkedin") {
       scope: "openid profile email",
       passReqToCallback: true,
       state: true,
+      pkce: true,
+      response_type: "code",
+      token_endpoint_auth_method: "client_secret_post",
+      authorizationParams: {
+        response_type: "code",
+        prompt: "consent",
+      },
     });
   }
 
