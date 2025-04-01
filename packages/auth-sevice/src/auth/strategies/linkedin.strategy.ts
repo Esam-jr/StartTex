@@ -12,7 +12,7 @@ export class LinkedInStrategy extends PassportStrategy(Strategy, "linkedin") {
     private configService: ConfigService,
     private authService: AuthService
   ) {
-    const config = {
+    super({
       issuer: "https://www.linkedin.com",
       authorizationURL: "https://www.linkedin.com/oauth/v2/authorization",
       tokenURL: "https://www.linkedin.com/oauth/v2/accessToken",
@@ -23,15 +23,18 @@ export class LinkedInStrategy extends PassportStrategy(Strategy, "linkedin") {
       scope: ["openid", "profile", "email"],
       passReqToCallback: true,
       state: true,
-      pkce: false, // Disabled to avoid conflicts with client_secret
+      pkce: false,
       token_endpoint_auth_method: "client_secret_post",
       authorizationParams: {
         response_type: "code",
         prompt: "consent",
       },
-    };
-    super(config);
-    this.logger.debug("LinkedIn Strategy Configuration:", config); // Log the config
+    });
+    this.logger.log("LinkedInStrategy constructor initialized"); // Confirm instantiation
+    this.logger.debug("Config Values:", {
+      clientID: configService.get<string>("LINKEDIN_CLIENT_ID"),
+      callbackURL: configService.get<string>("LINKEDIN_CALLBACK_URL"),
+    });
   }
 
   async validate(
@@ -41,30 +44,26 @@ export class LinkedInStrategy extends PassportStrategy(Strategy, "linkedin") {
     profile: any,
     accessToken: string
   ): Promise<any> {
-    try {
-      this.logger.debug("Access Token Received:", accessToken); // Log the token
-      this.logger.debug("LinkedIn OIDC Profile Received:", profile); // Log the profile
+    this.logger.log("validate method called"); // Confirm method execution
+    this.logger.debug("Access Token:", accessToken);
+    this.logger.debug("Profile:", profile);
 
-      const user = {
-        id: sub,
-        email: profile.email,
-        firstName: profile.given_name,
-        lastName: profile.family_name,
-        picture: profile.picture,
-        accessToken,
-      };
+    const user = {
+      id: sub,
+      email: profile.email,
+      firstName: profile.given_name,
+      lastName: profile.family_name,
+      picture: profile.picture,
+      accessToken,
+    };
 
-      this.logger.debug("Processed User Data:", user); // Log the processed user
+    this.logger.debug("Processed User:", user);
 
-      if (!user.email) {
-        this.logger.error("No email found in LinkedIn profile");
-        throw new Error("No email found in LinkedIn profile");
-      }
-
-      return this.authService.validateOAuthUser(user, "linkedin");
-    } catch (error) {
-      this.logger.error("Error in LinkedIn validate:", error);
-      throw error;
+    if (!user.email) {
+      this.logger.error("No email found in LinkedIn profile");
+      throw new Error("No email found in LinkedIn profile");
     }
+
+    return this.authService.validateOAuthUser(user, "linkedin");
   }
 }
