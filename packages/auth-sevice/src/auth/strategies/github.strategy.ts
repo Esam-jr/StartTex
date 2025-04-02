@@ -12,12 +12,20 @@ export class GithubStrategy extends PassportStrategy(Strategy, "github") {
     private configService: ConfigService,
     private authService: AuthService
   ) {
+    const callbackURL = configService.get<string>("GITHUB_CALLBACK_URL");
+
     super({
       clientID: configService.get<string>("GITHUB_CLIENT_ID"),
       clientSecret: configService.get<string>("GITHUB_CLIENT_SECRET"),
-      callbackURL: configService.get<string>("GITHUB_CALLBACK_URL"),
+      callbackURL: callbackURL,
       scope: ["user", "user:email"],
       passReqToCallback: true,
+    });
+
+    this.logger.debug("GitHub callback URL:", callbackURL);
+    this.logger.debug("GitHub strategy initialized with config:", {
+      callbackURL,
+      scope: ["user", "user:email"],
     });
   }
 
@@ -29,6 +37,7 @@ export class GithubStrategy extends PassportStrategy(Strategy, "github") {
   ): Promise<any> {
     try {
       this.logger.debug("GitHub profile received:", profile);
+      this.logger.debug("GitHub access token received:", accessToken);
 
       if (!profile) {
         this.logger.error("No profile received from GitHub");
