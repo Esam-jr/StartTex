@@ -3,6 +3,7 @@ import { PassportStrategy } from "@nestjs/passport";
 import { Strategy } from "passport-openidconnect";
 import { ConfigService } from "@nestjs/config";
 import { AuthService } from "../auth.service";
+import axios from "axios";
 
 @Injectable()
 export class LinkedInStrategy extends PassportStrategy(Strategy, "linkedin") {
@@ -20,19 +21,17 @@ export class LinkedInStrategy extends PassportStrategy(Strategy, "linkedin") {
       clientID: configService.get<string>("LINKEDIN_CLIENT_ID"),
       clientSecret: configService.get<string>("LINKEDIN_CLIENT_SECRET"),
       callbackURL: configService.get<string>("LINKEDIN_CALLBACK_URL"),
-      scope: "openid profile email",
+      scope: ["openid", "profile", "email"], // ✅ Fixed scope format
       passReqToCallback: true,
       state: true,
-      pkce: true,
-      response_type: "code",
-      token_endpoint_auth_method: "client_secret_post",
+      pkce: true, // ✅ Ensure PKCE is enabled
       authorizationParams: {
         response_type: "code",
         prompt: "consent",
       },
     });
 
-    // Add error handling for the strategy
+    // Ensure client secret is passed via POST
     this._oauth2.setAuthMethod("client_secret_post");
     this._oauth2.useAuthorizationHeaderforGET(false);
   }
@@ -53,26 +52,37 @@ export class LinkedInStrategy extends PassportStrategy(Strategy, "linkedin") {
         throw new Error("No profile received from LinkedIn");
       }
 
+      // ✅ Fetch email separately
+      const emailResponse = await axios.get(
+        "https://api.linkedin.com/v2/emailAddress?q=members&projection=(elements*(handle~))",
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
+      );
+
+      const email = emailResponse.data.elements?.[0]?.["handle~"]?.emailAddress;
+
+      if (!email) {
+        this.logger.error("No email found in LinkedIn profile");
+        throw new Error("No email found in LinkedIn profile");
+      }
+
       const user = {
         id: sub,
-        email: profile.email,
-        firstName: profile.given_name,
-        lastName: profile.family_name,
-        picture: profile.picture,
+        email,
+        firstName: profile.given_name || profile.name?.givenName || "",
+        lastName: profile.family_name || profile.name?.familyName || "",
+        picture: profile.picture || profile.photos?.[0]?.value || "",
         accessToken,
       };
 
       this.logger.debug("Processed user data:", user);
 
-      if (!user.email) {
-        this.logger.error("No email found in LinkedIn profile");
-        throw new Error("No email found in LinkedIn profile");
-      }
-
       return this.authService.validateOAuthUser(user, "linkedin");
     } catch (error) {
       this.logger.error("Error in LinkedIn validate:", error);
-      this.logger.error("Error stack:", error.stack);
       throw error;
     }
   }
