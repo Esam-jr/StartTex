@@ -21,17 +21,16 @@ export class LinkedInStrategy extends PassportStrategy(Strategy, "linkedin") {
       clientID: configService.get<string>("LINKEDIN_CLIENT_ID"),
       clientSecret: configService.get<string>("LINKEDIN_CLIENT_SECRET"),
       callbackURL: configService.get<string>("LINKEDIN_CALLBACK_URL"),
-      scope: ["openid", "profile", "email"], // ✅ Fixed scope format
+      scope: ["openid", "profile", "email"], 
       passReqToCallback: true,
       state: true,
-      pkce: true, // ✅ Ensure PKCE is enabled
+      pkce: true, 
       authorizationParams: {
         response_type: "code",
         prompt: "consent",
       },
     });
 
-    // Ensure client secret is passed via POST
     this._oauth2.setAuthMethod("client_secret_post");
     this._oauth2.useAuthorizationHeaderforGET(false);
   }
@@ -52,7 +51,6 @@ export class LinkedInStrategy extends PassportStrategy(Strategy, "linkedin") {
         throw new Error("No profile received from LinkedIn");
       }
 
-      // ✅ Fetch email separately
       const emailResponse = await axios.get(
         "https://api.linkedin.com/v2/emailAddress?q=members&projection=(elements*(handle~))",
         {
