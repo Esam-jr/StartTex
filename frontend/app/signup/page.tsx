@@ -5,6 +5,9 @@ import type React from "react"
 import { useState } from "react"
 import Link from "next/link"
 import { ArrowLeft, Github, Linkedin, Rocket } from "lucide-react"
+import { signIn } from "next-auth/react"
+import { useRouter } from "next/navigation"
+import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -17,11 +20,66 @@ export default function SignUpPage() {
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
   const [name, setName] = useState("")
+  const [isLoading, setIsLoading] = useState(false)
+  const router = useRouter()
 
-  const handleSignUp = (e: React.FormEvent) => {
+  const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault()
-    // Handle sign up logic
-    console.log("Sign up with:", name, email, password)
+    setIsLoading(true)
+
+    if (password !== confirmPassword) {
+      toast.error("Passwords do not match")
+      setIsLoading(false)
+      return
+    }
+
+    try {
+      const response = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email,
+          password,
+          name,
+          role: "entrepreneur", // Default role for new signups
+        }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.message || "Something went wrong")
+      }
+
+      // Sign in the user after successful registration
+      const result = await signIn("credentials", {
+        email,
+        password,
+        redirect: false,
+      })
+
+      if (result?.error) {
+        toast.error(result.error)
+        return
+      }
+
+      toast.success("Account created successfully")
+      router.push("/dashboard")
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Something went wrong")
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleSocialSignUp = async (provider: string) => {
+    try {
+      await signIn(provider, { callbackUrl: "/dashboard" })
+    } catch (error) {
+      toast.error("Something went wrong. Please try again.")
+    }
   }
 
   return (
@@ -153,7 +211,7 @@ export default function SignUpPage() {
                 </p>
               </div>
 
-              <Button variant="outline" className="w-full" onClick={() => console.log("Sign up with Google")}>
+              <Button variant="outline" className="w-full" onClick={() => handleSocialSignUp("google")}>
                 <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
                   <path
                     d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -176,12 +234,12 @@ export default function SignUpPage() {
                 Sign up with Google
               </Button>
 
-              <Button variant="outline" className="w-full" onClick={() => console.log("Sign up with GitHub")}>
+              <Button variant="outline" className="w-full" onClick={() => handleSocialSignUp("github")}>
                 <Github className="mr-2 h-4 w-4" />
                 Sign up with GitHub
               </Button>
 
-              <Button variant="outline" className="w-full" onClick={() => console.log("Sign up with LinkedIn")}>
+              <Button variant="outline" className="w-full" onClick={() => handleSocialSignUp("linkedin")}>
                 <Linkedin className="mr-2 h-4 w-4" />
                 Sign up with LinkedIn
               </Button>
