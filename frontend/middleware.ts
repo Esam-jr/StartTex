@@ -1,81 +1,55 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { auth } from "@/lib/auth";
+import { getToken } from "next-auth/jwt";
 
-type ProtectedRoutes = {
-  [key: string]: string[];
-};
+export default async function middleware(req: NextRequest) {
+  const token = await getToken({ req });
+  const isAuth = !!token;
+  const isAuthPage = req.nextUrl.pathname.startsWith("/signin") ||
+    req.nextUrl.pathname.startsWith("/signup");
+  const isAdminPage = req.nextUrl.pathname.startsWith("/admin");
 
-// Define protected routes and their required roles
-const protectedRoutes: ProtectedRoutes = {
-  "/dashboard": ["ADMIN", "ENTREPRENEUR", "SPONSOR", "REVIEWER"],
-  "/admin": ["ADMIN"],
-  "/sponsor": ["SPONSOR"],
-  "/reviewer": ["REVIEWER"],
-  "/entrepreneur": ["ENTREPRENEUR"],
-};
+  try {
+    if (isAuthPage) {
+      if (isAuth) {
+        // If user is already logged in and tries to access auth pages
+        if (token?.role === "ADMIN") {
+          return NextResponse.redirect(new URL("/admin/dashboard", req.url));
+        }
+        return NextResponse.redirect(new URL("/dashboard", req.url));
+      }
+      return null; // Allow access to auth pages if not logged in
+    }
 
-export async function middleware(request: NextRequest) {
-  const session = await auth();
+    if (!isAuth) {
+      // If user is not logged in and tries to access protected pages
+      let callbackUrl = req.nextUrl.pathname;
+      if (req.nextUrl.search) {
+        callbackUrl += req.nextUrl.search;
+      }
+      const encodedCallbackUrl = encodeURIComponent(callbackUrl);
+      return NextResponse.redirect(new URL(`/signin?callbackUrl=${encodedCallbackUrl}`, req.url));
+    }
 
-  // Public routes - allow access
-  if (!isProtectedRoute(request.nextUrl.pathname)) {
+    if (isAdminPage && token?.role !== "ADMIN") {
+      // If non-admin user tries to access admin pages
+      return NextResponse.redirect(new URL("/dashboard", req.url));
+    }
+
     return NextResponse.next();
-  }
-
-  // No session - redirect to login
-  if (!session) {
-    const loginUrl = new URL("/auth/login", request.url);
-    loginUrl.searchParams.set("callbackUrl", request.nextUrl.pathname);
-    return NextResponse.redirect(loginUrl);
-  }
-
-  // Check role-based access
-  const requiredRoles = getRequiredRoles(request.nextUrl.pathname);
-  if (!requiredRoles.includes(session.user.role)) {
-    // Redirect to appropriate dashboard based on role
-    const redirectUrl = getRoleBasedRedirect(session.user.role);
-    return NextResponse.redirect(new URL(redirectUrl, request.url));
-  }
-
-  return NextResponse.next();
-}
-
-// Helper functions
-function isProtectedRoute(pathname: string): boolean {
-  return Object.keys(protectedRoutes).some(route => 
-    pathname.startsWith(route)
-  );
-}
-
-function getRequiredRoles(pathname: string): string[] {
-  const route = Object.keys(protectedRoutes).find(route => 
-    pathname.startsWith(route)
-  );
-  return route ? protectedRoutes[route] : [];
-}
-
-function getRoleBasedRedirect(role: string): string {
-  switch (role) {
-    case "ADMIN":
-      return "/admin";
-    case "SPONSOR":
-      return "/sponsor";
-    case "REVIEWER":
-      return "/reviewer";
-    case "ENTREPRENEUR":
-      return "/entrepreneur";
-    default:
-      return "/auth/login";
+  } catch (error) {
+    console.error("Middleware error:", error);
+    return NextResponse.redirect(new URL("/signin", req.url));
   }
 }
 
+// Protect these paths with authentication
 export const config = {
   matcher: [
     "/dashboard/:path*",
     "/admin/:path*",
-    "/sponsor/:path*",
-    "/reviewer/:path*",
-    "/entrepreneur/:path*",
-  ],
+    "/signin",
+    "/signup",
+    "/profile/:path*"
+  ]
 }; 

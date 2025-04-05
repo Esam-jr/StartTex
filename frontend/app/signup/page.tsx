@@ -43,7 +43,7 @@ export default function SignUpPage() {
           email,
           password,
           name,
-          role: "entrepreneur", // Default role for new signups
+          role: "ENTREPRENEUR", // Default role for new signups
         }),
       })
 
@@ -78,7 +78,7 @@ export default function SignUpPage() {
     try {
       await signIn(provider, { callbackUrl: "/dashboard" })
     } catch (error) {
-      toast.error("Something went wrong. Please try again.")
+      toast.error("Something went wrong")
     }
   }
 
@@ -197,8 +197,9 @@ export default function SignUpPage() {
                 <Button
                   type="submit"
                   className="w-full bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90"
+                  disabled={isLoading}
                 >
-                  Create Account
+                  {isLoading ? "Creating Account..." : "Create Account"}
                 </Button>
               </form>
             </TabsContent>

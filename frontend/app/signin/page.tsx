@@ -8,6 +8,7 @@ import { ArrowLeft, Github, Linkedin, Rocket } from "lucide-react"
 import { signIn } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
+import { getSession } from "next-auth/react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -36,8 +37,16 @@ export default function SignInPage() {
         return
       }
 
+      // Get the session to check user role
+      const session = await getSession()
+      
+      if (session?.user?.role === "ADMIN") {
+        router.push("/admin/dashboard")
+      } else {
+        router.push("/dashboard")
+      }
+      
       toast.success("Signed in successfully")
-      router.push("/dashboard")
     } catch (error) {
       toast.error("Something went wrong. Please try again.")
     } finally {
@@ -47,9 +56,12 @@ export default function SignInPage() {
 
   const handleSocialSignIn = async (provider: string) => {
     try {
-      await signIn(provider, { callbackUrl: "/dashboard" })
+      // For social sign-in, we'll handle the redirect in the callback
+      await signIn(provider, {
+        callbackUrl: "/dashboard", // This will be overridden for admin users in the callback
+      })
     } catch (error) {
-      toast.error("Something went wrong. Please try again.")
+      toast.error("Something went wrong")
     }
   }
 
