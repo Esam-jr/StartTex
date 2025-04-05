@@ -2,28 +2,47 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { ArrowLeft, Github, Linkedin, Rocket } from "lucide-react"
 import { signIn } from "next-auth/react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { toast } from "sonner"
-import { getSession } from "next-auth/react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Icons } from "@/components/icons"
 
 export default function SignInPage() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
+  const searchParams = useSearchParams()
+  
+  // Check for error messages from URL
+  useEffect(() => {
+    const error = searchParams.get("error")
+    if (error) {
+      if (error === "CredentialsSignin") {
+        toast.error("Invalid email or password. Please try again.")
+      } else {
+        toast.error(`Authentication error: ${error}`)
+      }
+    }
+  }, [searchParams])
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
+
+    if (!email || !password) {
+      toast.error("Please enter both email and password")
+      setIsLoading(false)
+      return
+    }
 
     try {
       const result = await signIn("credentials", {
@@ -33,35 +52,52 @@ export default function SignInPage() {
       })
 
       if (result?.error) {
-        toast.error(result.error)
-        return
-      }
-
-      // Get the session to check user role
-      const session = await getSession()
-      
-      if (session?.user?.role === "ADMIN") {
-        router.push("/admin/dashboard")
+        console.error("Sign-in error:", result.error)
+        
+        // Show specific error messages
+        if (result.error.includes("email or password")) {
+          toast.error("Invalid email or password. Please verify your credentials and try again.")
+        } else if (result.error.includes("User not found")) {
+          toast.error("Account not found. Please check your email or sign up.")
+        } else if (result.error.includes("password reset")) {
+          toast.error("Account requires password reset. Please contact support.")
+        } else {
+          toast.error("Sign-in failed. Please try again.")
+        }
+        
+        setIsLoading(false)
       } else {
-        router.push("/dashboard")
+        toast.success("Signed in successfully!")
+        
+        // Fetch user session to get role data
+        const session = await fetch('/api/auth/session');
+        const sessionData = await session.json();
+        
+        // Redirect based on role
+        if (sessionData?.user?.role === "ADMIN") {
+          console.log("Admin user detected, redirecting to admin dashboard");
+          router.push("/admin");
+        } else {
+          console.log("Regular user detected, redirecting to dashboard");
+          router.push("/dashboard");
+        }
       }
-      
-      toast.success("Signed in successfully")
     } catch (error) {
-      toast.error("Something went wrong. Please try again.")
-    } finally {
+      console.error("Sign-in exception:", error)
+      toast.error("An unexpected error occurred. Please try again.")
       setIsLoading(false)
     }
   }
 
   const handleSocialSignIn = async (provider: string) => {
     try {
-      // For social sign-in, we'll handle the redirect in the callback
+      // For social sign-in, use redirect but make sure the server-side 
+      // callback redirects based on user role
       await signIn(provider, {
-        callbackUrl: "/dashboard", // This will be overridden for admin users in the callback
-      })
+        callbackUrl: "/api/auth/redirect", // This URL should check role and redirect accordingly
+      });
     } catch (error) {
-      toast.error("Something went wrong")
+      toast.error("Failed to connect with the social provider. Please try again.");
     }
   }
 
@@ -135,7 +171,14 @@ export default function SignInPage() {
                   />
                 </div>
                 <Button type="submit" className="w-full" disabled={isLoading}>
-                  Sign In
+                  {isLoading ? (
+                    <>
+                      <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
+                      Signing in...
+                    </>
+                  ) : (
+                    "Sign In"
+                  )}
                 </Button>
               </form>
             </TabsContent>

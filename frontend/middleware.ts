@@ -1,32 +1,38 @@
 import { withAuth } from "next-auth/middleware";
 import { NextResponse } from "next/server";
 
-// This function handles pages that should be protected by authentication
+// Simplified middleware for protecting routes and handling admin access
 export default withAuth(
   function middleware(req) {
-    const { token } = req.nextauth;
-    const isAdminPage = req.nextUrl.pathname.startsWith("/admin");
-
-    // If non-admin user tries to access admin pages
-    if (isAdminPage && token?.role !== "ADMIN") {
+    // Check for admin routes
+    const isAdminRoute = req.nextUrl.pathname.startsWith("/admin");
+    
+    // Get token from the request's nextauth property
+    const token = req.nextauth?.token;
+    
+    // If trying to access admin routes but not an admin, redirect to dashboard
+    if (isAdminRoute && token?.role !== "ADMIN") {
       return NextResponse.redirect(new URL("/dashboard", req.url));
     }
-
+    
+    // Allow the request to proceed
     return NextResponse.next();
   },
   {
     callbacks: {
-      authorized: ({ token }) => !!token,
+      // Only proceed if the user has a valid token
+      authorized({ token }) {
+        return !!token;
+      },
     },
   }
 );
 
-// Protect only these paths with authentication
-// Note: signin and signup pages are REMOVED from here to prevent redirect loops
+// Only protect these specific paths
 export const config = {
   matcher: [
-    "/dashboard/:path*",
+    "/dashboard/:path*", 
     "/admin/:path*", 
-    "/profile/:path*",
-  ],
+    "/profile/:path*"
+  ]
 }; 

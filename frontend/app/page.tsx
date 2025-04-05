@@ -255,6 +255,9 @@ export default function Home() {
             <Link href="/privacy" className="text-sm text-muted-foreground underline-offset-4 hover:underline">
               Privacy
             </Link>
+            <Link href="/test-accounts" className="text-sm text-muted-foreground underline-offset-4 hover:underline">
+              Test Accounts
+            </Link>
           </div>
         </div>
       </footer>

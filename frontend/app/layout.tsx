@@ -1,20 +1,27 @@
-import type { Metadata } from 'next'
 import './globals.css'
+import type { Metadata } from 'next'
+import { Inter } from "next/font/google"
+import AuthProvider from '@/components/auth/auth-provider'
+
+const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: 'v0 App',
-  description: 'Created with v0',
-  generator: 'v0.dev',
+  title: 'StartTex',
+  description: 'StartTex Startup Management System',
 }
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode
-}>) {
+}) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body className={inter.className}>
+        <AuthProvider>
+          {children}
+        </AuthProvider>
+      </body>
     </html>
   )
 }

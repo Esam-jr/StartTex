@@ -33,7 +33,14 @@ export default function SignUpPage() {
       return
     }
 
+    if (password.length < 8) {
+      toast.error("Password must be at least 8 characters long")
+      setIsLoading(false)
+      return
+    }
+
     try {
+      // Register the user
       const response = await fetch("/api/auth/register", {
         method: "POST",
         headers: {
@@ -50,25 +57,55 @@ export default function SignUpPage() {
       const data = await response.json()
 
       if (!response.ok) {
+        // Handle specific error cases
+        if (response.status === 400) {
+          if (data.message.includes("already exists")) {
+            toast.error("An account with this email already exists. Please sign in instead.")
+            setTimeout(() => router.push("/signin"), 2000)
+            return
+          } else if (data.errors && Array.isArray(data.errors)) {
+            // Display all validation errors
+            data.errors.forEach((err: any) => {
+              toast.error(err.message)
+            })
+            return
+          }
+        }
         throw new Error(data.message || "Something went wrong")
       }
 
+      toast.success("Account created successfully!")
+
       // Sign in the user after successful registration
-      const result = await signIn("credentials", {
+      const signInResult = await signIn("credentials", {
         email,
         password,
         redirect: false,
       })
 
-      if (result?.error) {
-        toast.error(result.error)
+      if (signInResult?.error) {
+        toast.error("Account created but unable to sign in automatically. Please sign in manually.")
+        setTimeout(() => router.push("/signin"), 2000)
         return
       }
 
-      toast.success("Account created successfully")
-      router.push("/dashboard")
+      // Success - fetch session to determine redirect
+      const sessionResponse = await fetch('/api/auth/session')
+      const session = await sessionResponse.json()
+      
+      // Redirect based on role
+      if (session?.user?.role === "ADMIN") {
+        router.push("/admin/dashboard")
+      } else {
+        router.push("/dashboard")
+      }
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Something went wrong")
+      console.error("Registration error:", error)
+      if (error instanceof Error) {
+        toast.error(error.message)
+      } else {
+        toast.error("Failed to create account. Please try again later.")
+      }
     } finally {
       setIsLoading(false)
     }
@@ -78,7 +115,7 @@ export default function SignUpPage() {
     try {
       await signIn(provider, { callbackUrl: "/dashboard" })
     } catch (error) {
-      toast.error("Something went wrong")
+      toast.error("Failed to connect with the social provider. Please try again.")
     }
   }
 
@@ -164,6 +201,7 @@ export default function SignUpPage() {
                     onChange={(e) => setPassword(e.target.value)}
                     required
                   />
+                  <p className="text-xs text-muted-foreground">Password must be at least 8 characters long</p>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="confirm-password">Confirm Password</Label>
